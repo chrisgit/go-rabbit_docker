@@ -39,9 +39,11 @@ sudo -E to pass in the GOPATH variable.
 The build includes any libraries, this is because the Go program will be running a container built from Scratch, see https://blog.codeship.com/building-minimal-docker-containers-for-go-applications/
 
 ## Running the code
-After Vagrant has finished there should be a running instance of rabbitmq and four available Docker containers.
+After Vagrant has finished there should be three running container
 
-To keep things simple we will run the rabbit_producer and rabbit_consumer directly.
+* rabbitmq
+* rabbit_producer
+* rabbit_consumer
 
 Login to the virtual machine with 
 
@@ -49,28 +51,21 @@ Login to the virtual machine with
 vagrant ssh
 ```
 
-Change folders to /opt/go/src/rabbit_producer and run rabbit_producer, this sits and waits for messages on port 34500.
-
-In another ssh session change folders to /opt/go/src/rabbit_consumer and run rabbit_consumer, this sits and waits for messages from rabbitmq.
-
-In another ssh session run a curl command to send a message to the rabbit_producer.
+Send a message to our rabbit_producer container (listening on port 34500)
 ```
 curl -G -v "http://localhost:34500/send" --data-urlencode "message=hello world"
 ```
 
-The message should be output by the rabbit_consumer.
-
-## Running everything in containers
-
-Alternatively you could run rabbit_producer and rabbit_consumer containers but first you would need the ip address of the rabbit container, which is obtained by running the following
+The message should be received by the rabbit_consumer, you can test this with
 ```
-docker inspect --format '{{ .NetworkSettings.IPAddress }}' rabbitmq
+docker logs rabbit_consumer
 ```
 
-Run the producer against the IP address of the container (or use Docker Networking)
-```
-docker run -it -p 34500:34500 -e "RABBIT_HOSTNAME=172.17.0.2"  rabbit_producer
-```
+And see the message passed in as part of the query string
+
+There we have two Go programs, compiled from source, an instance of Rabbitmq and messages being passed from one program to another.
+
+The linux box does not have Go or Rabbit installed, just Docker!
 
 License and Authors
 -------------------

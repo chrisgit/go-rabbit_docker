@@ -31,6 +31,12 @@ $run_rabbit_container = <<EOF
 docker run -d --hostname go-rabbit --name rabbitmq -p 5672:5672 -p 8080:15672 rabbitmq:3.6.9-management
 EOF
 
+$run_producer_consumer_containers = <<EOF
+docker run -d --link rabbitmq:rabbitmq -p 34500:34500  --name rabbit_producer -e RABBIT_HOSTNAME=rabbitmq rabbit_producer
+sleep 5
+docker run -d --link rabbitmq:rabbitmq --name rabbit_consumer -e RABBIT_HOSTNAME=rabbitmq rabbit_consumer
+EOF
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = 'ubuntu/trusty64'
 
@@ -49,12 +55,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  d.pull_images 'golang'
     end
     v.vm.network "forwarded_port", id: "rabbit_management", host: 8080, guest: 8080, protocol: "tcp"
-	v.vm.synced_folder ".", "/opt/go/src", create: true
-	v.vm.provision "shell", inline: $create_go_folders
-	v.vm.provision "shell", inline: $build_rabbit_producer
-	v.vm.provision "shell", inline: $build_rabbit_consumer
-	v.vm.provision "shell", inline: $build_rabbit_producer_docker_image
-	v.vm.provision "shell", inline: $build_rabbit_consumer_docker_image	
-	v.vm.provision "shell", inline: $run_rabbit_container
+    v.vm.synced_folder ".", "/opt/go/src", create: true
+    v.vm.provision "shell", inline: $create_go_folders
+    v.vm.provision "shell", inline: $build_rabbit_producer
+    v.vm.provision "shell", inline: $build_rabbit_consumer
+    v.vm.provision "shell", inline: $build_rabbit_producer_docker_image
+    v.vm.provision "shell", inline: $build_rabbit_consumer_docker_image	
+    v.vm.provision "shell", inline: $run_rabbit_container
+    v.vm.provision "shell", inline: $run_producer_consumer_containers
   end
 end
